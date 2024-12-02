@@ -30,8 +30,6 @@ export default function GameCard({ card, handleCardPress }: Props) {
         outputRange: ['180deg', '360deg']
     });
 
-    console.log(card.isFlipped ? `the card: ${card.emoji}` : "");
-
     return (
         <TouchableOpacity
             key={card.id}
