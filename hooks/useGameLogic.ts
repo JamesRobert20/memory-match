@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Audio } from 'expo-av';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { CardType, Difficulty, GameStats } from '../types/game';
-import { GARDEN_CARDS, DIFFICULTY_SETTINGS } from '../constants/gameItems';
+import { CardType, Difficulty, GameStats } from '@/types/game';
+import { GARDEN_CARDS, DIFFICULTY_SETTINGS } from '@/constants/gameItems';
 
 export const useGameLogic = (difficulty: Difficulty) => {
     const [cards, setCards] = useState<CardType[]>([]);
