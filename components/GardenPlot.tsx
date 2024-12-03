@@ -166,15 +166,23 @@ const styles = StyleSheet.create({
     plot: {
         width: 80,
         height: 80,
-        borderWidth: 1,
-        borderColor: '#ccc',
-        borderRadius: 8,
+        borderWidth: 2,
+        borderColor: '#4CAF50',
+        borderRadius: 12,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#f0f0f0',
+        backgroundColor: 'rgba(255,255,255,0.8)',
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        elevation: 5,
     },
     plantedPlot: {
-        backgroundColor: '#e8f5e9',
+        backgroundColor: 'rgba(232, 245, 233, 0.9)',
     },
     plantContainer: {
         position: 'relative',

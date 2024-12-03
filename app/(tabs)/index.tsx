@@ -8,6 +8,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import GameCard from '@/components/GameCard';
 import { useGameContext } from '@/contexts/GameContext';
 import { IconSymbol } from '@/components/ui/IconSymbol';
+import { GameBackground } from '@/components/GameBackground';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function TabOneScreen() {
     const [difficulty, setDifficulty] = useState<Difficulty>('medium');
@@ -25,76 +27,106 @@ export default function TabOneScreen() {
     const insets = useSafeAreaInsets();
 
     return (
-        <ThemedView style={[styles.container, { paddingTop: insets.top + 40 }]}>
-            <ThemedText
-                type="title"
-                style={{
-                    textAlign: 'center',
-                    marginBottom: 20
-                }}
-            >
-                Memory Match Garden
-            </ThemedText>
-
-            <View style={styles.difficultyContainer}>
-                {(['easy', 'medium', 'hard'] as Difficulty[]).map((level) => (
-                    <TouchableOpacity
-                        key={level}
-                        style={[
-                            styles.difficultyButton,
-                            difficulty === level && styles.selectedDifficulty,
-                        ]}
-                        onPress={() => setDifficulty(level)}
+        <View style={styles.container}>
+            <GameBackground />
+            
+            <View style={[styles.content, { paddingTop: insets.top + 40 }]}>
+                <LinearGradient
+                    colors={['rgba(255,255,255,0.9)', 'rgba(255,255,255,0.7)']}
+                    style={styles.titleContainer}>
+                    <ThemedText
+                        type="title"
+                        style={styles.title}
                     >
-                        <ThemedText>{level.toUpperCase()}</ThemedText>
-                    </TouchableOpacity>
-                ))}
-                <TouchableOpacity
-                    style={styles.difficultyButton}
-                    onPress={initializeGame}
-                >
-                    <View style={styles.buttonContent}>
-                        <IconSymbol name="arrow.clockwise" size={20} color="#4CAF50" />
-                        <ThemedText>NEW</ThemedText>
+                        Memory Match Garden
+                    </ThemedText>
+                </LinearGradient>
+
+                <LinearGradient
+                    colors={['rgba(255,255,255,0.9)', 'rgba(255,255,255,0.7)']}
+                    style={styles.controlsContainer}>
+                    <View style={styles.difficultyContainer}>
+                        {(['easy', 'medium', 'hard'] as Difficulty[]).map((level) => (
+                            <TouchableOpacity
+                                key={level}
+                                style={[
+                                    styles.difficultyButton,
+                                    difficulty === level && styles.selectedDifficulty,
+                                ]}
+                                onPress={() => setDifficulty(level)}
+                            >
+                                <ThemedText>{level.toUpperCase()}</ThemedText>
+                            </TouchableOpacity>
+                        ))}
+                        <TouchableOpacity
+                            style={styles.difficultyButton}
+                            onPress={initializeGame}
+                        >
+                            <View style={styles.buttonContent}>
+                                <IconSymbol name="arrow.clockwise" size={20} color="#4CAF50" />
+                                <ThemedText>NEW</ThemedText>
+                            </View>
+                        </TouchableOpacity>
                     </View>
-                </TouchableOpacity>
-            </View>
 
-            <View style={styles.statsContainer}>
-                <ThemedText type="subtitle">Matches: {score}</ThemedText>
-                <ThemedText type="subtitle">Time: {timeLeft}s</ThemedText>
-                <ThemedText type="subtitle">Best: {gameStats.bestScore}</ThemedText>
-            </View>
+                    <View style={styles.statsContainer}>
+                        <ThemedText type="subtitle">Matches: {score}</ThemedText>
+                        <ThemedText type="subtitle">Time: {timeLeft}s</ThemedText>
+                        <ThemedText type="subtitle">Best: {gameStats.bestScore}</ThemedText>
+                    </View>
+                </LinearGradient>
 
-            <View style={styles.grid}>
-                {cards.map((card) => (
-                    <GameCard
-                        key={card.id}
-                        card={card}
-                        handleCardPress={handleCardPress}
-                    />
-                ))}
+                <View style={styles.grid}>
+                    {cards.map((card) => (
+                        <GameCard
+                            key={card.id}
+                            card={card}
+                            handleCardPress={handleCardPress}
+                        />
+                    ))}
+                </View>
             </View>
 
             {(gameOver || gameWon) && (
                 <View style={styles.gameOverContainer}>
-                    <ThemedText type="title" style={{ color: 'white' }}>
-                        {gameWon ? 'You Won! 🎉' : 'Game Over!'}
-                    </ThemedText>
-                    <ThemedText style={{ color: 'white' }}>Final Score: {score}</ThemedText>
-                    <TouchableOpacity style={styles.button} onPress={initializeGame}>
-                        <ThemedText>Play Again</ThemedText>
-                    </TouchableOpacity>
+                    <LinearGradient
+                        colors={['rgba(255,255,255,0.95)', 'rgba(255,255,255,0.85)']}
+                        style={styles.gameOverContent}>
+                        <ThemedText type="title" style={styles.gameOverTitle}>
+                            {gameWon ? '🎉 You Won! 🎉' : 'Game Over'}
+                        </ThemedText>
+                        <ThemedText style={styles.scoreText}>Final Score: {score}</ThemedText>
+                        <TouchableOpacity style={styles.playAgainButton} onPress={initializeGame}>
+                            <ThemedText style={styles.buttonText}>Play Again</ThemedText>
+                        </TouchableOpacity>
+                    </LinearGradient>
                 </View>
             )}
-        </ThemedView>
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+    },
+    content: {
+        flex: 1,
         padding: 20,
+    },
+    titleContainer: {
+        borderRadius: 15,
+        padding: 15,
+        marginBottom: 20,
+    },
+    title: {
+        textAlign: 'center',
+        color: '#2E7D32',
+    },
+    controlsContainer: {
+        borderRadius: 15,
+        padding: 15,
+        marginBottom: 20,
     },
     difficultyContainer: {
         flexDirection: 'row',
@@ -106,9 +138,10 @@ const styles = StyleSheet.create({
         padding: 10,
         borderRadius: 8,
         borderWidth: 1,
-        borderColor: '#ccc',
+        borderColor: '#4CAF50',
         minWidth: 70,
         alignItems: 'center',
+        backgroundColor: 'rgba(255,255,255,0.8)',
     },
     selectedDifficulty: {
         backgroundColor: '#4CAF50',
@@ -117,36 +150,51 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-around',
         width: '100%',
-        marginBottom: 20,
     },
     grid: {
         flexDirection: 'row',
         flexWrap: 'wrap',
         justifyContent: 'center',
         gap: 10,
-        marginBottom: 20,
     },
-
+    buttonContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+    },
     gameOverContainer: {
         position: 'absolute',
         top: 0,
         left: 0,
         right: 0,
         bottom: 0,
-        backgroundColor: 'rgba(0,0,0,0.8)',
         justifyContent: 'center',
         alignItems: 'center',
-        gap: 20,
+        backgroundColor: 'rgba(0,0,0,0.5)',
     },
-    button: {
+    gameOverContent: {
+        padding: 30,
+        borderRadius: 20,
+        alignItems: 'center',
+        gap: 15,
+    },
+    gameOverTitle: {
+        color: '#2E7D32',
+    },
+    scoreText: {
+        fontSize: 18,
+        color: '#2E7D32',
+    },
+    playAgainButton: {
         backgroundColor: '#4CAF50',
         padding: 15,
         borderRadius: 8,
-        marginTop: 10,
-    },
-    buttonContent: {
-        flexDirection: 'row',
+        minWidth: 120,
         alignItems: 'center',
-        gap: 4,
+    },
+    buttonText: {
+        color: 'white',
+        fontSize: 16,
+        fontWeight: 'bold',
     },
 }); 
