@@ -21,4 +21,18 @@ export type GameStats = {
   bestScore: number;
   totalMatches: number;
   gardenItems: GardenItem[];
-}; 
+};
+
+export interface Garden {
+  plots: {
+    id: string;
+    soilState: 'empty' | 'tilled' | 'watered' | 'planted';
+    plantedSeedId: string | null;
+    plantedEmoji?: string;
+  }[];
+  inventory: GardenItem[];
+  tools: {
+    wateringCan: boolean;
+    trowel: boolean;
+  };
+} 

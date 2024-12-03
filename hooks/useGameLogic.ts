@@ -3,30 +3,28 @@ import { Audio } from 'expo-av';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CardType, Difficulty, GameStats } from '@/types/game';
 import { GARDEN_CARDS, DIFFICULTY_SETTINGS } from '@/constants/gameItems';
+import { useGameContext } from '@/contexts/GameContext';
 
 export const useGameLogic = (difficulty: Difficulty) => {
     const [cards, setCards] = useState<CardType[]>([]);
     const [flippedCards, setFlippedCards] = useState<number[]>([]);
     const [score, setScore] = useState(0);
-    const [timeLeft, setTimeLeft] = useState(DIFFICULTY_SETTINGS[difficulty].timeLimit);
+    const [timeLeft, setTimeLeft] = useState(0);
+    const [gameStarted, setGameStarted] = useState(false);
     const [gameOver, setGameOver] = useState(false);
-    const [stats, setStats] = useState<GameStats>({
-        bestScore: 0,
-        totalMatches: 0,
-        gardenItems: [],
-    });
+    const { gameStats, setGameStats, setGarden } = useGameContext();
 
-    // Timer logic
+    // Timer logic - only starts when gameStarted is true
     useEffect(() => {
-        if (timeLeft > 0 && !gameOver) {
+        if (timeLeft > 0 && gameStarted && !gameOver) {
             const timer = setInterval(() => {
                 setTimeLeft(time => time - 1);
             }, 1000);
             return () => clearInterval(timer);
-        } else if (timeLeft === 0) {
+        } else if (timeLeft === 0 && gameStarted) {
             setGameOver(true);
         }
-    }, [timeLeft, gameOver]);
+    }, [timeLeft, gameStarted, gameOver]);
 
     const initializeGame = () => {
         const cardPairs = getRandomCards(DIFFICULTY_SETTINGS[difficulty].pairs);
@@ -45,6 +43,7 @@ export const useGameLogic = (difficulty: Difficulty) => {
         setScore(0);
         setTimeLeft(DIFFICULTY_SETTINGS[difficulty].timeLimit);
         setGameOver(false);
+        setGameStarted(false);
     };
 
     const getRandomCards = (numPairs: number) => {
@@ -58,6 +57,9 @@ export const useGameLogic = (difficulty: Difficulty) => {
     };
 
     const handleCardPress = async (cardId: number) => {
+        if (!gameStarted) {
+            setGameStarted(true);
+        }
         if (flippedCards.length === 2 || cards[cardId].isMatched || gameOver) return;
 
         // Play flip sound
@@ -123,22 +125,24 @@ export const useGameLogic = (difficulty: Difficulty) => {
         }, 1000);
     };
 
-    const addToGarden = async (card: CardType) => {
+    const addToGarden = (card: CardType) => {
         const newGardenItem = {
             id: Date.now().toString(),
             type: card.type,
             emoji: card.emoji,
             isPlanted: false,
         };
-
-        const newStats = {
-            ...stats,
-            totalMatches: stats.totalMatches + 1,
-            gardenItems: [...stats.gardenItems, newGardenItem],
-        };
-
-        setStats(newStats);
-        await AsyncStorage.setItem('gameStats', JSON.stringify(newStats));
+    
+        setGameStats(prev => ({
+            ...prev,
+            totalMatches: prev.totalMatches + 1,
+            gardenItems: [...prev.gardenItems, newGardenItem],
+        }));
+    
+        setGarden(prev => ({
+            ...prev,
+            inventory: [...prev.inventory, newGardenItem]
+        }));
     };
 
     return {
@@ -146,7 +150,7 @@ export const useGameLogic = (difficulty: Difficulty) => {
         score,
         timeLeft,
         gameOver,
-        stats,
+        gameStats,
         handleCardPress,
         initializeGame,
     };

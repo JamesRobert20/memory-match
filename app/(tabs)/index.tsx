@@ -1,21 +1,21 @@
 import React, { useState } from 'react';
-import { StyleSheet, TouchableOpacity, View, Dimensions, Animated } from 'react-native';
+import { StyleSheet, TouchableOpacity, View, Dimensions } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useGameLogic } from '@/hooks/useGameLogic';
 import { Difficulty } from '@/types/game';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useAnimatedStyle, withTiming, interpolate } from 'react-native-reanimated';
 import GameCard from '@/components/GameCard';
+import { useGameContext } from '@/contexts/GameContext';
 
 export default function GameScreen() {
     const [difficulty, setDifficulty] = useState<Difficulty>('medium');
+    const { gameStats } = useGameContext();
     const {
         cards,
         score,
         timeLeft,
         gameOver,
-        stats,
         handleCardPress,
         initializeGame,
     } = useGameLogic(difficulty);
@@ -48,7 +48,7 @@ export default function GameScreen() {
             <View style={styles.statsContainer}>
                 <ThemedText type="subtitle">Matches: {score}</ThemedText>
                 <ThemedText type="subtitle">Time: {timeLeft}s</ThemedText>
-                <ThemedText type="subtitle">Best: {stats.bestScore}</ThemedText>
+                <ThemedText type="subtitle">Best: {gameStats.bestScore}</ThemedText>
             </View>
 
             <View style={styles.grid}>
@@ -63,8 +63,8 @@ export default function GameScreen() {
 
             {gameOver && (
                 <View style={styles.gameOverContainer}>
-                    <ThemedText type="title">Game Over!</ThemedText>
-                    <ThemedText>Final Score: {score}</ThemedText>
+                    <ThemedText type="title" style={{ color: 'white' }}>Game Over!</ThemedText>
+                    <ThemedText style={{ color: 'white' }}>Final Score: {score}</ThemedText>
                     <TouchableOpacity style={styles.button} onPress={initializeGame}>
                         <ThemedText>Play Again</ThemedText>
                     </TouchableOpacity>
@@ -85,6 +85,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     title: {
+        textAlign: 'center',
         marginBottom: 20,
     },
     difficultyContainer: {

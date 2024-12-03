@@ -1,105 +1,58 @@
-import React, { useState } from 'react';
-import { StyleSheet, View, TouchableOpacity, PanResponder } from 'react-native';
+import React from 'react';
+import { StyleSheet, View, TouchableOpacity, ScrollView } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
-import { GardenItem } from '@/types/game';
+import { useGameContext } from '@/contexts/GameContext';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import GardenPlot from '@/components/GardenPlot';
 
-interface GardenScreenProps {
-    stats: {
-        gardenItems: GardenItem[];
+export default function GardenScreen() {
+    const { garden, setGarden } = useGameContext();
+
+    const handlePlantSeed = (plotId: string, seedId: string, seedEmoji: string) => {
+        setGarden(prev => ({
+            ...prev,
+            plots: prev.plots.map(plot =>
+                plot.id === plotId
+                    ? { 
+                        ...plot, 
+                        plantedSeedId: seedId, 
+                        plantedEmoji: seedEmoji,
+                        soilState: 'planted' 
+                    }
+                    : plot
+            ),
+            inventory: prev.inventory.filter(seed => seed.id !== seedId)
+        }));
     };
-}
 
-export default function GardenScreen({ stats }: GardenScreenProps) {
-    const [selectedItem, setSelectedItem] = useState<GardenItem | null>(null);
-    const [plantedItems, setPlantedItems] = useState<GardenItem[]>(
-        stats.gardenItems.filter(item => item.isPlanted)
-    );
-    const [draggedItem, setDraggedItem] = useState<{ x: number; y: number } | null>(null);
-
-    const panResponder = PanResponder.create({
-        onStartShouldSetPanResponder: () => true,
-        onPanResponderMove: (_, gestureState) => {
-            if (selectedItem) {
-                setDraggedItem({
-                    x: gestureState.moveX,
-                    y: gestureState.moveY,
-                });
-            }
-        },
-        onPanResponderRelease: (_, gestureState) => {
-            if (selectedItem) {
-                handlePlantItem({ x: gestureState.moveX, y: gestureState.moveY });
-                setDraggedItem(null);
-            }
-        },
-    });
-
-    const handlePlantItem = (location: { x: number; y: number }) => {
-        if (!selectedItem) return;
-
-        const newPlantedItem = {
-            ...selectedItem,
-            isPlanted: true,
-            position: location,
-        };
-
-        setPlantedItems([...plantedItems, newPlantedItem]);
-        setSelectedItem(null);
-    };
+    const insets = useSafeAreaInsets();
 
     return (
-        <ThemedView style={styles.container}>
-            <ThemedText type="title">Your Garden</ThemedText>
+        <ThemedView style={[styles.container, { paddingTop: insets.top + 40 }]}>
+            <ThemedText type="title" style={styles.title}>Your Garden</ThemedText>
 
-            <View style={styles.gardenArea} {...panResponder.panHandlers}>
-                {plantedItems.map((item) => (
-                    <View
-                        key={item.id}
-                        style={[
-                            styles.plantedItem,
-                            {
-                                left: item.position?.x,
-                                top: item.position?.y,
-                            },
-                        ]}
-                    >
-                        <ThemedText style={styles.emojiText}>{item.emoji}</ThemedText>
-                    </View>
-                ))}
-                {draggedItem && selectedItem && (
-                    <View
-                        style={[
-                            styles.plantedItem,
-                            styles.draggingItem,
-                            {
-                                left: draggedItem.x,
-                                top: draggedItem.y,
-                            },
-                        ]}
-                    >
-                        <ThemedText style={styles.emojiText}>{selectedItem.emoji}</ThemedText>
-                    </View>
-                )}
-            </View>
+            <ScrollView style={styles.gardenScroll}>
+                <View style={styles.gardenGrid}>
+                    {garden.plots.map(plot =>
+                        <GardenPlot
+                            key={plot.id}
+                            plot={plot}
+                            garden={garden}
+                            handlePlantSeed={handlePlantSeed}
+                        />
+                    )}
+                </View>
+            </ScrollView>
 
             <View style={styles.inventory}>
-                <ThemedText type="subtitle">Inventory</ThemedText>
-                <View style={styles.inventoryGrid}>
-                    {stats.gardenItems
-                        .filter(item => !item.isPlanted)
-                        .map((item) => (
-                            <TouchableOpacity
-                                key={item.id}
-                                style={[
-                                    styles.inventoryItem,
-                                    selectedItem?.id === item.id && styles.selectedInventoryItem,
-                                ]}
-                                onPress={() => setSelectedItem(item)}
-                            >
-                                <ThemedText style={styles.emojiText}>{item.emoji}</ThemedText>
-                            </TouchableOpacity>
-                        ))}
+                <ThemedText type="subtitle">Seeds ({garden.inventory.length})</ThemedText>
+                <View style={styles.seedGrid}>
+                    {garden.inventory.map((seed) => (
+                        <View key={seed.id} style={styles.seed}>
+                            <ThemedText style={styles.seedEmoji}>{seed.emoji}</ThemedText>
+                        </View>
+                    ))}
                 </View>
             </View>
         </ThemedView>
@@ -109,58 +62,41 @@ export default function GardenScreen({ stats }: GardenScreenProps) {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#fff',
-        alignItems: 'center',
-        justifyContent: 'center',
+        padding: 20,
     },
-    gardenArea: {
-        width: '80%',
-        height: '50%',
-        position: 'relative',
-        borderWidth: 1,
-        borderColor: '#ccc',
-        borderRadius: 10,
-        overflow: 'hidden',
+    title: {
+        textAlign: 'center',
+        marginBottom: 20,
     },
-    plantedItem: {
-        width: '20%',
-        height: '20%',
-        position: 'absolute',
-        borderWidth: 1,
-        borderColor: '#ccc',
-        borderRadius: 5,
-        overflow: 'hidden',
-        justifyContent: 'center',
-        alignItems: 'center',
+    gardenScroll: {
+        flex: 1,
     },
-    emojiText: {
-        fontSize: 24,
-    },
-    inventory: {
-        width: '80%',
-        marginTop: 20,
-    },
-    inventoryGrid: {
+    gardenGrid: {
         flexDirection: 'row',
         flexWrap: 'wrap',
         justifyContent: 'center',
+        gap: 10,
+        padding: 10,
     },
-    inventoryItem: {
-        width: '20%',
-        height: '20%',
+    inventory: {
+        marginTop: 20,
+    },
+    seedGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 10,
+        marginTop: 10,
+    },
+    seed: {
+        width: 50,
+        height: 50,
         borderWidth: 1,
         borderColor: '#ccc',
-        borderRadius: 5,
+        borderRadius: 8,
         justifyContent: 'center',
         alignItems: 'center',
-        margin: 5,
     },
-    draggingItem: {
-        position: 'absolute',
-        opacity: 0.7,
-    },
-    selectedInventoryItem: {
-        borderColor: '#007AFF',
-        borderWidth: 2,
-    },
+    seedEmoji: {
+        fontSize: 24,
+    }
 }); 
