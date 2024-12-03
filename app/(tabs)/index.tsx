@@ -7,8 +7,9 @@ import { Difficulty } from '@/types/game';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import GameCard from '@/components/GameCard';
 import { useGameContext } from '@/contexts/GameContext';
+import { IconSymbol } from '@/components/ui/IconSymbol';
 
-export default function GameScreen() {
+export default function TabOneScreen() {
     const [difficulty, setDifficulty] = useState<Difficulty>('medium');
     const { gameStats } = useGameContext();
     const {
@@ -16,34 +17,48 @@ export default function GameScreen() {
         score,
         timeLeft,
         gameOver,
+        gameWon,
         handleCardPress,
         initializeGame,
     } = useGameLogic(difficulty);
-
-    const renderDifficultySelector = () => (
-        <View style={styles.difficultyContainer}>
-            {(['easy', 'medium', 'hard'] as Difficulty[]).map((level) => (
-                <TouchableOpacity
-                    key={level}
-                    style={[
-                        styles.difficultyButton,
-                        difficulty === level && styles.selectedDifficulty,
-                    ]}
-                    onPress={() => setDifficulty(level)}
-                >
-                    <ThemedText>{level.toUpperCase()}</ThemedText>
-                </TouchableOpacity>
-            ))}
-        </View>
-    );
 
     const insets = useSafeAreaInsets();
 
     return (
         <ThemedView style={[styles.container, { paddingTop: insets.top + 40 }]}>
-            <ThemedText type="title" style={styles.title}>Memory Match Garden</ThemedText>
+            <ThemedText
+                type="title"
+                style={{
+                    textAlign: 'center',
+                    marginBottom: 20
+                }}
+            >
+                Memory Match Garden
+            </ThemedText>
 
-            {renderDifficultySelector()}
+            <View style={styles.difficultyContainer}>
+                {(['easy', 'medium', 'hard'] as Difficulty[]).map((level) => (
+                    <TouchableOpacity
+                        key={level}
+                        style={[
+                            styles.difficultyButton,
+                            difficulty === level && styles.selectedDifficulty,
+                        ]}
+                        onPress={() => setDifficulty(level)}
+                    >
+                        <ThemedText>{level.toUpperCase()}</ThemedText>
+                    </TouchableOpacity>
+                ))}
+                <TouchableOpacity
+                    style={styles.difficultyButton}
+                    onPress={initializeGame}
+                >
+                    <View style={styles.buttonContent}>
+                        <IconSymbol name="arrow.clockwise" size={20} color="#4CAF50" />
+                        <ThemedText>NEW</ThemedText>
+                    </View>
+                </TouchableOpacity>
+            </View>
 
             <View style={styles.statsContainer}>
                 <ThemedText type="subtitle">Matches: {score}</ThemedText>
@@ -61,19 +76,17 @@ export default function GameScreen() {
                 ))}
             </View>
 
-            {gameOver && (
+            {(gameOver || gameWon) && (
                 <View style={styles.gameOverContainer}>
-                    <ThemedText type="title" style={{ color: 'white' }}>Game Over!</ThemedText>
+                    <ThemedText type="title" style={{ color: 'white' }}>
+                        {gameWon ? 'You Won! 🎉' : 'Game Over!'}
+                    </ThemedText>
                     <ThemedText style={{ color: 'white' }}>Final Score: {score}</ThemedText>
                     <TouchableOpacity style={styles.button} onPress={initializeGame}>
                         <ThemedText>Play Again</ThemedText>
                     </TouchableOpacity>
                 </View>
             )}
-
-            <TouchableOpacity style={styles.button} onPress={initializeGame}>
-                <ThemedText>New Game</ThemedText>
-            </TouchableOpacity>
         </ThemedView>
     );
 }
@@ -82,22 +95,20 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         padding: 20,
-        alignItems: 'center',
-    },
-    title: {
-        textAlign: 'center',
-        marginBottom: 20,
     },
     difficultyContainer: {
         flexDirection: 'row',
         marginBottom: 20,
         gap: 10,
+        justifyContent: 'center',
     },
     difficultyButton: {
         padding: 10,
         borderRadius: 8,
         borderWidth: 1,
         borderColor: '#ccc',
+        minWidth: 70,
+        alignItems: 'center',
     },
     selectedDifficulty: {
         backgroundColor: '#4CAF50',
@@ -115,7 +126,7 @@ const styles = StyleSheet.create({
         gap: 10,
         marginBottom: 20,
     },
-    
+
     gameOverContainer: {
         position: 'absolute',
         top: 0,
@@ -132,5 +143,10 @@ const styles = StyleSheet.create({
         padding: 15,
         borderRadius: 8,
         marginTop: 10,
-    }
+    },
+    buttonContent: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+    },
 }); 

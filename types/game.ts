@@ -29,6 +29,8 @@ export interface Garden {
     soilState: 'empty' | 'tilled' | 'watered' | 'planted';
     plantedSeedId: string | null;
     plantedEmoji?: string;
+    growthStage?: number;
+    plantedTime?: number;
   }[];
   inventory: GardenItem[];
   tools: {

@@ -5,6 +5,19 @@ import { CardType, Difficulty, GameStats } from '@/types/game';
 import { GARDEN_CARDS, DIFFICULTY_SETTINGS } from '@/constants/gameItems';
 import { useGameContext } from '@/contexts/GameContext';
 
+async function playSound(soundName: 'match' | 'fail' | 'flip') {
+    try {
+        const { sound } = await Audio.Sound.createAsync(
+            soundName === 'match' ? require('@/assets/sounds/match.mp3') :
+            soundName === 'fail' ? require('@/assets/sounds/fail.mp3') :
+            require('@/assets/sounds/flip.mp3')
+        );
+        await sound.playAsync();
+    } catch (error) {
+        console.error('Error playing sound:', error);
+    }
+}
+
 export const useGameLogic = (difficulty: Difficulty) => {
     const [cards, setCards] = useState<CardType[]>([]);
     const [flippedCards, setFlippedCards] = useState<number[]>([]);
@@ -12,11 +25,12 @@ export const useGameLogic = (difficulty: Difficulty) => {
     const [timeLeft, setTimeLeft] = useState(0);
     const [gameStarted, setGameStarted] = useState(false);
     const [gameOver, setGameOver] = useState(false);
+    const [gameWon, setGameWon] = useState(false);
     const { gameStats, setGameStats, setGarden } = useGameContext();
 
-    // Timer logic - only starts when gameStarted is true
+    // Timer logic
     useEffect(() => {
-        if (timeLeft > 0 && gameStarted && !gameOver) {
+        if (timeLeft > 0 && gameStarted && !gameOver && !gameWon) {
             const timer = setInterval(() => {
                 setTimeLeft(time => time - 1);
             }, 1000);
@@ -24,7 +38,16 @@ export const useGameLogic = (difficulty: Difficulty) => {
         } else if (timeLeft === 0 && gameStarted) {
             setGameOver(true);
         }
-    }, [timeLeft, gameStarted, gameOver]);
+    }, [timeLeft, gameStarted, gameOver, gameWon]);
+
+    // Check for win condition
+    useEffect(() => {
+        if (score === DIFFICULTY_SETTINGS[difficulty].pairs) {
+            setGameWon(true);
+            // Play win sound
+            playSound('match');
+        }
+    }, [score, difficulty]);
 
     const initializeGame = () => {
         const cardPairs = getRandomCards(DIFFICULTY_SETTINGS[difficulty].pairs);
@@ -43,6 +66,7 @@ export const useGameLogic = (difficulty: Difficulty) => {
         setScore(0);
         setTimeLeft(DIFFICULTY_SETTINGS[difficulty].timeLimit);
         setGameOver(false);
+        setGameWon(false);
         setGameStarted(false);
     };
 
@@ -63,14 +87,7 @@ export const useGameLogic = (difficulty: Difficulty) => {
         if (flippedCards.length === 2 || cards[cardId].isMatched || gameOver) return;
 
         // Play flip sound
-        try {
-            const { sound } = await Audio.Sound.createAsync(
-                require('@/assets/sounds/flip.mp3')
-            );
-            await sound.playAsync();
-        } catch (error) {
-            console.error('Error playing sound:', error);
-        }
+        await playSound('flip');
 
         const newCards = [...cards];
         newCards[cardId].isFlipped = true;
@@ -90,14 +107,7 @@ export const useGameLogic = (difficulty: Difficulty) => {
         setTimeout(async () => {
             if (cards[first].type === cards[second].type) {
                 // Play match sound
-                try {
-                    const { sound } = await Audio.Sound.createAsync(
-                        require('@/assets/sounds/match.mp3')
-                    );
-                    await sound.playAsync();
-                } catch (error) {
-                    console.error('Error playing sound:', error);
-                }
+                await playSound('match');
 
                 const newCards = [...cards];
                 newCards[first].isMatched = true;
@@ -107,14 +117,7 @@ export const useGameLogic = (difficulty: Difficulty) => {
                 addToGarden(cards[first]);
             } else {
                 // Play fail sound
-                try {
-                    const { sound } = await Audio.Sound.createAsync(
-                        require('@/assets/sounds/fail.mp3')
-                    );
-                    await sound.playAsync();
-                } catch (error) {
-                    console.error('Error playing sound:', error);
-                }
+                await playSound('fail');
 
                 const newCards = [...cards];
                 newCards[first].isFlipped = false;
@@ -150,7 +153,7 @@ export const useGameLogic = (difficulty: Difficulty) => {
         score,
         timeLeft,
         gameOver,
-        gameStats,
+        gameWon,
         handleCardPress,
         initializeGame,
     };
