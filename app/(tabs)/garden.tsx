@@ -58,7 +58,7 @@ export default function GardenScreen() {
         <View style={styles.seedGrid}>
           {garden.inventory.map((seed) => (
             <View key={seed.id} style={styles.seed}>
-              <ThemedText style={styles.seedEmoji}>{seed.emoji}</ThemedText>
+              <ThemedText style={styles.seedEmoji}>{'🥜'}</ThemedText>
             </View>
           ))}
         </View>
@@ -114,6 +114,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.8)',
   },
   seedEmoji: {
-    fontSize: 24,
+    fontSize: 20,
   }
 }); 
