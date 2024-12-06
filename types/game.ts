@@ -23,6 +23,8 @@ export type GameStats = {
   gardenItems: GardenItem[];
 };
 
+export type HazardType = 'pests' | null;
+
 export interface Garden {
   plots: {
     id: string;
@@ -31,6 +33,7 @@ export interface Garden {
     plantedEmoji?: string;
     growthStage?: number;
     plantedTime?: number;
+    hazard?: HazardType;
   }[];
   inventory: GardenItem[];
   tools: {

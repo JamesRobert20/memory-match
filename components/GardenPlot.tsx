@@ -1,18 +1,62 @@
 import { TouchableOpacity, StyleSheet, View, Animated } from "react-native";
-import { Garden } from "@/types/game";
+import { Garden, HazardType } from "@/types/game";
 import { ThemedText } from "./ThemedText";
 import { useEffect, useState, useRef } from "react";
 
 type Props = {
     plot: Garden['plots'][0];
     garden: Garden;
-    handlePlantSeed: (plotId: string, seedId: string, seedEmoji: string) => void;
+    handlePlantSeed: (plotId: string, seedId: string, seedEmoji: string, wasDestroyed: boolean) => void;
 }
 
 // Sparkle component
 const Sparkle = ({ style }: { style: any }) => (
     <Animated.Text style={style}>✨</Animated.Text>
 );
+
+const getHazardEmoji = (hazard: HazardType) => {
+    switch (hazard) {
+        case 'pests': return '🐛';
+        default: return '';
+    }
+};
+
+const DestructionAnimation = ({ onComplete }: { onComplete: () => void }) => {
+    const opacity = useRef(new Animated.Value(1)).current;
+    const scale = useRef(new Animated.Value(1)).current;
+
+    useEffect(() => {
+        Animated.parallel([
+            Animated.timing(opacity, {
+                toValue: 0,
+                duration: 1000,
+                useNativeDriver: true,
+            }),
+            Animated.sequence([
+                Animated.timing(scale, {
+                    toValue: 1.5,
+                    duration: 500,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(scale, {
+                    toValue: 0,
+                    duration: 500,
+                    useNativeDriver: true,
+                })
+            ])
+        ]).start(() => onComplete());
+    }, []);
+
+    return (
+        <Animated.View style={{
+            position: 'absolute',
+            opacity,
+            transform: [{ scale }]
+        }}>
+            <ThemedText style={{ fontSize: 24 }}>💥</ThemedText>
+        </Animated.View>
+    );
+};
 
 export default function GardenPlot({ plot, garden, handlePlantSeed }: Props) {
     const [growthStage, setGrowthStage] = useState(0);
@@ -84,6 +128,22 @@ export default function GardenPlot({ plot, garden, handlePlantSeed }: Props) {
         inputRange: [0, 1],
         outputRange: ['0deg', '360deg']
     });
+    const [showDestruction, setShowDestruction] = useState(false);
+
+    const handlePress = () => {
+        if (garden.inventory.length > 0 && plot.soilState === 'empty') {
+            const seedToPlant = garden.inventory[0];
+
+            if (plot.hazard) {
+                // Show destruction animation
+                setShowDestruction(true);
+                // Remove the seed without planting it
+                handlePlantSeed(plot.id, seedToPlant.id, seedToPlant.emoji, true);
+            } else {
+                handlePlantSeed(plot.id, seedToPlant.id, seedToPlant.emoji, false);
+            }
+        }
+    };
 
     return (
         <TouchableOpacity
@@ -91,13 +151,18 @@ export default function GardenPlot({ plot, garden, handlePlantSeed }: Props) {
                 styles.plot,
                 plot.soilState === 'planted' && styles.plantedPlot
             ]}
-            onPress={() => {
-                if (garden.inventory.length > 0 && plot.soilState === 'empty') {
-                    const seedToPlant = garden.inventory[0];
-                    handlePlantSeed(plot.id, seedToPlant.id, seedToPlant.emoji);
-                }
-            }}
+            onPress={handlePress}
         >
+            {plot.hazard && plot.soilState === 'planted' && (
+                <ThemedText style={styles.hazardEmoji}>
+                    {getHazardEmoji(plot.hazard)}
+                </ThemedText>
+            )}
+
+            {showDestruction && (
+                <DestructionAnimation onComplete={() => setShowDestruction(false)} />
+            )}
+
             {plot.soilState === 'planted' && (
                 <View style={styles.plantContainer}>
                     {/* Progress ring - hide when growth is complete */}
@@ -166,12 +231,12 @@ const styles = StyleSheet.create({
     plot: {
         width: 80,
         height: 80,
-        borderWidth: 2,
-        borderColor: '#4CAF50',
-        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: '#ccc',
+        borderRadius: 8,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: 'rgba(255,255,255,0.8)',
+        backgroundColor: '#f0f0f0',
         shadowColor: '#000',
         shadowOffset: {
             width: 0,
@@ -182,7 +247,7 @@ const styles = StyleSheet.create({
         elevation: 5,
     },
     plantedPlot: {
-        backgroundColor: 'rgba(232, 245, 233, 0.9)',
+        backgroundColor: '#e8f5e9',
     },
     plantContainer: {
         position: 'relative',
@@ -232,4 +297,9 @@ const styles = StyleSheet.create({
         left: -20,
         transform: [{ translateY: -8 }],
     },
+    hazardEmoji: {
+        position: 'absolute',
+        fontSize: 16,
+        opacity: 0.7,
+    }
 });

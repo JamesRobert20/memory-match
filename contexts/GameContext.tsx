@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState } from 'react';
-import { Garden, GameStats } from '@/types/game';
+import { Garden, GameStats, HazardType } from '@/types/game';
 
 interface GameContextType {
   garden: Garden;
@@ -12,11 +12,17 @@ const GameContext = createContext<GameContextType | undefined>(undefined);
 
 export function GameProvider({ children }: { children: React.ReactNode }) {
   const [garden, setGarden] = useState<Garden>({
-    plots: Array.from({ length: 36 }, (_, i) => ({
-      id: `plot-${i}`,
-      soilState: 'empty',
-      plantedSeedId: null
-    })),
+    plots: Array.from({ length: 36 }, (_, i) => {
+      const hasHazard = Math.random() < 0.3;
+      const hazardTypes: HazardType[] = ['pests'];
+      
+      return {
+        id: `plot-${i}`,
+        soilState: 'empty',
+        plantedSeedId: null,
+        hazard: hasHazard ? hazardTypes[Math.floor(Math.random() * hazardTypes.length)] : null
+      };
+    }),
     inventory: [],
     tools: {
       wateringCan: true,

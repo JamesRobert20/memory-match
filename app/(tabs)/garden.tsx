@@ -11,16 +11,16 @@ export default function GardenScreen() {
   const { garden, setGarden } = useGameContext();
   const insets = useSafeAreaInsets();
 
-  const handlePlantSeed = (plotId: string, seedId: string, seedEmoji: string) => {
+  const handlePlantSeed = (plotId: string, seedId: string, seedEmoji: string, wasDestroyed: boolean) => {
     setGarden(prev => ({
       ...prev,
       plots: prev.plots.map(plot =>
         plot.id === plotId
           ? { 
               ...plot, 
-              plantedSeedId: seedId, 
-              plantedEmoji: seedEmoji,
-              soilState: 'planted' 
+              plantedSeedId: wasDestroyed ? null : seedId, 
+              plantedEmoji: wasDestroyed ? undefined : seedEmoji,
+              soilState: wasDestroyed ? 'empty' : 'planted' 
           }
           : plot
       ),
